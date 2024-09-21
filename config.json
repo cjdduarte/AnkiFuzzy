@@ -1,0 +1,4 @@
+{
+    "FIELDS_TO_CHECK": ["Frente", "Front", "Questão"],
+    "GROUP_SIZE": 40
+}
