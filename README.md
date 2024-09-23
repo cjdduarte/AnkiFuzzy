@@ -117,6 +117,14 @@ The add-on uses the following libraries and functions:
 
 ### **Change Log**
 
+- **v1.1.1 - Warning Handling**:
+  - Implemented warning suppression when using the fallback `difflib.SequenceMatcher`.
+
+- **v1.1 - Tag and Menu Improvements**:
+  - Improved tag removal to clear all tags starting with "AnkiFuzzy," including sub-tags.
+  - Added parent menu "Anki AnkiFuzzy" with submenus for locating similar cards and clearing tags.
+  - Ensured the tag panel updates immediately after clearing tags.
+
 - **v1.0 - Initial Release**:
   - Added functionality to compare cards based on token sort and partial ratio.
   - Introduced a tagging system for "Identical", "Similar", and "Needs confirmation" cards.

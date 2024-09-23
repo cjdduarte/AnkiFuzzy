@@ -33,11 +33,15 @@ if current_language == "pt_BR":
     msg_no_cards_found = "Nenhum cartão encontrado no deck atual."
     msg_no_fields_found = "Nenhum dos campos definidos ({fields}) foi encontrado nos cartões do deck."
     msg_analysis_complete = "{n} cartão(ões) semelhantes encontrados e {m} cartão(ões) foram marcados com tags em {tempo:.2f} segundos."
+    msg_clear_tags_complete = "Todas as tags relacionadas ao AnkiFuzzy foram removidas."
+    msg_confirm_clear_tags = "Tem certeza de que deseja remover todas as tags AnkiFuzzy?"
     tag_identical = "AnkiFuzzy::2-Análise::1-Idênticos"
     tag_similar = "AnkiFuzzy::2-Análise::2-Similares"
     tag_confirm = "AnkiFuzzy::2-Análise::3-Confirmar"
     tag_suspend = "AnkiFuzzy::1-Suspender"
-    menu_label = "AnkiFuzzy - Localizar Cartões Semelhantes"
+    menu_label_locate = "1 - Localizar Cartões Semelhantes"
+    menu_label_clear = "2 - Limpar Tags"
+    menu_parent_label = "AnkiFuzzy"
 else:
     # Textos em inglês
     msg_deck_selected = "The selected deck is: {deck}.\nThe fields to be checked are: {fields}.\n\nDo you want to continue with the analysis?"
@@ -48,15 +52,48 @@ else:
     msg_no_cards_found = "No cards found in the current deck."
     msg_no_fields_found = "None of the defined fields ({fields}) were found in the cards of the deck."
     msg_analysis_complete = "{n} similar cards found and {m} cards were tagged in {tempo:.2f} seconds."
+    msg_clear_tags_complete = "All AnkiFuzzy-related tags have been removed."
+    msg_confirm_clear_tags = "Are you sure you want to remove all AnkiFuzzy tags?"
     tag_identical = "AnkiFuzzy::2-Analysis::1-Identical"
     tag_similar = "AnkiFuzzy::2-Analysis::2-Similar"
     tag_confirm = "AnkiFuzzy::2-Analysis::3-Confirm"
     tag_suspend = "AnkiFuzzy::1-Suspend"
-    menu_label = "AnkiFuzzy - Locate Similar Cards"
+    menu_label_locate = "1 - Locate Similar Cards"
+    menu_label_clear = "2 - Clear Tags"
+    menu_parent_label = "AnkiFuzzy"
 
 # Função para limpar o conteúdo HTML de um texto
 def clean_html(text):
     return BeautifulSoup(text, "html.parser").get_text()
+
+# Função otimizada para remover todas as tags relacionadas ao AnkiFuzzy
+def clear_tags():
+    if askUser(msg_confirm_clear_tags):
+        ankifuzzy_prefix = "AnkiFuzzy"
+
+        # Encontra apenas as notas que possuem tags que começam com "AnkiFuzzy"
+        notes_with_ankifuzzy = mw.col.find_notes("tag:AnkiFuzzy*")
+
+        for note_id in notes_with_ankifuzzy:
+            note = mw.col.get_note(note_id)
+            original_tags = note.tags
+
+            # Filtra as tags que começam com "AnkiFuzzy"
+            updated_tags = [tag for tag in original_tags if not tag.startswith(ankifuzzy_prefix)]
+
+            # Se houve alteração, atualize as tags da nota
+            if len(updated_tags) != len(original_tags):
+                note.tags = updated_tags
+                note.flush()  # Salva as alterações na nota
+
+        # Recarrega as tags para garantir que o painel seja atualizado
+        mw.col.tags.registerNotes(mw.col)  # Atualiza a lista de tags
+        mw.reset()  # Atualiza a interface do Anki
+        showInfo(msg_clear_tags_complete)
+
+
+
+
 
 # Função principal para encontrar e marcar cartões semelhantes
 def find_similar_cards():
@@ -246,9 +283,19 @@ def find_similar_cards():
     dialog.accept()
     mw.reset()
 
+# Função para adicionar itens de menu no Anki
 def add_menu_item():
-    action = QAction(menu_label, mw)
-    action.triggered.connect(find_similar_cards)
-    mw.form.menuTools.addAction(action)
+    # Adiciona o menu principal "Anki AnkiFuzzy"
+    parent_menu = mw.form.menuTools.addMenu(menu_parent_label)
+
+    # Submenu para localizar cartões semelhantes
+    locate_action = QAction(menu_label_locate, mw)
+    locate_action.triggered.connect(find_similar_cards)
+    parent_menu.addAction(locate_action)
+
+    # Submenu para limpar tags
+    clear_action = QAction(menu_label_clear, mw)
+    clear_action.triggered.connect(clear_tags)
+    parent_menu.addAction(clear_action)
 
 add_menu_item()
